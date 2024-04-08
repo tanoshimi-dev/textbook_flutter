@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+
+  flutter-lesson-mysql:
+    container_name: 'flutter.lesson.mysql'
+    image: mysql:5.7
+    platform: linux/x86_64
+    environment:
+      MYSQL_ROOT_PASSWORD: flDbRoot
+      MYSQL_DATABASE: fl_backend
+      MYSQL_USER: fl_user
+      MYSQL_PASSWORD: fl_1P@ss
+    volumes:
+      - ./db/data:/var/lib/mysql
+
+  flutter-lesson-myadmin:
+    container_name: 'flutter.lesson.myadmin'
+    depends_on:
+      - flutter-lesson-mysql
+    image: phpmyadmin/phpmyadmin
+    platform: linux/x86_64
+    environment:
+      PMA_HOST: flutter-lesson-mysql
+    restart: always
+    ports:
+      - "15011:80"
+
+  
