@@ -26,6 +26,7 @@ services:
   backend-mysql:
     container_name: 'backend.mysql'
     image: mysql:5.7
+    platform: linux/x86_64
     environment:
       MYSQL_ROOT_PASSWORD: smRbRoot
       MYSQL_DATABASE: flutter_backend
@@ -39,13 +40,10 @@ services:
     depends_on:
       - backend-mysql
     image: phpmyadmin/phpmyadmin
+    platform: linux/x86_64
     environment:
       PMA_HOST: backend-mysql
     restart: always
     ports:
       - "15021:80"
 
-# networks:
-#   default:
-#     external:
-#       name: rd-shared

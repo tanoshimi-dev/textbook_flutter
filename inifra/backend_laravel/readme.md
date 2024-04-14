@@ -1,34 +1,17 @@
-#LMS
-https://terakoya.sejuku.net/programs/92/chapters
+1.phpコンテナに入り、ライブラリなどのインストール
+  docker compose exec -it backend-php sh
+  composer install
 
-#SAMURAI教材
-#https://terakoya.sejuku.net/programs/92/chapters
+2.envファイルをコピー
+  .env.exampleのファイル名を.envに修正する
 
-#環境構築手順
-１．docker環境確認
-dockerでコンテナ起動後、画面確認
-１－１．
-http://localhost:4001
-info.php
-http://localhost:4002
-phpmyadmin
+3.artisanコマンドの実行
+  php artisan key:generate
 
-２．laravel9 のインストール
-srcフォルダ内を空削除
+4.画面からAPI動作確認
+  http://localhost:15011/api/hello
+  http://localhost:15011/api/messages
 
-dockerコンテナに入る
-docker-compose run -it samurai-php-amazon1-php sh
-
-
-２－１．
-Laravelのインストール
-composer create-project "laravel/laravel=9.*" .
-composer install
-
-php artisan key:generate
-
-２－２．動作確認
-http://localhost:4001
 
 
 
