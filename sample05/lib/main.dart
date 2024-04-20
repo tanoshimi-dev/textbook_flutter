@@ -47,7 +47,7 @@ class Album {
   }
 }
 
-Future<Map<String, dynamic>> callApi() async {
+Future<Map<String, dynamic>> callApiHello() async {
   final response =
       // エミュレーターから（ローカルPC内の）dockerコンテナへのアドレスは10.0.2.2となる
       await http.get(Uri.parse('http://10.0.2.2:15011/api/hello'));
@@ -56,6 +56,40 @@ Future<Map<String, dynamic>> callApi() async {
     // If the server did return a 200 OK response,
     // then parse the JSON.
     return jsonDecode(response.body);
+  } else {
+    // If the server did not return a 200 OK response,
+    // then throw an exception.
+    throw Exception('Failed to call api');
+  }
+}
+
+Future<List<Map<String, dynamic>>> callApiMessages() async {
+  final response =
+      // エミュレーターから（ローカルPC内の）dockerコンテナへのアドレスは10.0.2.2となる
+      await http.get(Uri.parse('http://10.0.2.2:15011/api/messages'));
+
+  if (response.statusCode == 200) {
+    // If the server did return a 200 OK response,
+    // then parse the JSON.
+    print(jsonDecode(response.body));
+    // return jsonDecode(response.body);
+    Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+    var data = jsonResponse['data'];
+    // print(data);
+    // print(data.length);
+    List<Map<String, dynamic>> dataList = List<Map<String, dynamic>>.from(data);
+
+    // Now you can iterate over dataList
+    for (var item in dataList) {
+      //print(item);
+      // item.forEach((key, value) {
+      //   print('Key: $key, Value: $value');
+      // });
+      print('item message=${item['message']} number=${item['number']}');
+    }
+    //return jsonDecode(response.body);
+    print('callApiMessages()');
+    return dataList;
   } else {
     // If the server did not return a 200 OK response,
     // then throw an exception.
@@ -75,16 +109,20 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   int _counter = 1;
   late Future<Album> futureAlbum;
-  late Future<Map<String, dynamic>>? apiMessage;
+  late Future<Map<String, dynamic>>? apiHello;
+  late Future<List<Map<String, dynamic>>>? apiMessages;
 
   // ローディング中かどうかを示すフラグ
-  bool isLoading = false;
+  bool isApiHelloLoading = false;
+  // bool isApiMessagesLoading = false;
 
   @override
   void initState() {
     super.initState();
     futureAlbum = fetchAlbum(_counter);
-    apiMessage = callApi();
+    apiHello = callApiHello();
+    apiMessages = callApiMessages();
+    // apiMessages = null;
   }
 
   void _reFetch() {
@@ -95,18 +133,28 @@ class _MyAppState extends State<MyApp> {
   }
 
   // APIを呼び出す関数
-  void _callApi() {
+  void _callApiHello() {
     setState(() {
-      isLoading = true;
+      isApiHelloLoading = true;
     });
 
-    apiMessage = Future.delayed(Duration(seconds: 0), () => callApi());
+    apiHello = Future.delayed(Duration(seconds: 0), () => callApiHello());
 
-    apiMessage!.then((_) {
+    apiHello!.then((_) {
       setState(() {
-        isLoading = false;
+        isApiHelloLoading = false;
       });
     });
+  }
+
+  // APIを呼び出す関数
+  void _callApiMessages() {
+    print('_callApiMessages start');
+    setState(() {
+      apiMessages =
+          Future.delayed(Duration(seconds: 0), () => callApiMessages());
+    });
+    print('_callApiMessages end');
   }
 
   @override
@@ -120,64 +168,103 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(
           title: const Text('Fetch Data Example'),
         ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                // jsonplaceholderへの通信
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Text('You have pushed the button this many times:'),
-                        FutureBuilder<Album>(
-                          future: futureAlbum,
+        body: Padding(
+          padding: const EdgeInsets.fromLTRB(8.0, 24.0, 8.0, 8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              // jsonplaceholderへの通信
+              Center(
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Text('You have pushed the button this many times:'),
+                      FutureBuilder<Album>(
+                        future: futureAlbum,
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            return Text(snapshot.data!.title);
+                          } else if (snapshot.hasError) {
+                            return Text('${snapshot.error}');
+                          }
+
+                          // By default, show a loading spinner.
+                          return const CircularProgressIndicator();
+                        },
+                      ),
+                      ElevatedButton(
+                          onPressed: _reFetch, child: const Text('Press Me')),
+                    ]),
+              ),
+              const SizedBox(height: 16.0),
+              Center(
+                // dockerコンテナへの送信
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Text('You have pushed the button this many times:'),
+                      if (isApiHelloLoading)
+                        CircularProgressIndicator()
+                      else
+                        FutureBuilder<Map<String, dynamic>>(
+                          future: apiHello,
                           builder: (context, snapshot) {
                             if (snapshot.hasData) {
-                              return Text(snapshot.data!.title);
+                              return Text(snapshot.data!.toString());
                             } else if (snapshot.hasError) {
                               return Text('${snapshot.error}');
+                            } else {
+                              return SizedBox.shrink(); // Empty widget
                             }
-
-                            // By default, show a loading spinner.
-                            return const CircularProgressIndicator();
                           },
                         ),
-                      ]),
-                ),
-                ElevatedButton(
-                    onPressed: _reFetch, child: const Text('Press Me')),
-                Padding(
-                  // dockerコンテナへの送信
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Text('You have pushed the button this many times:'),
-                        if (isLoading)
-                          CircularProgressIndicator()
-                        else
-                          FutureBuilder<Map<String, dynamic>>(
-                            future: apiMessage,
-                            builder: (context, snapshot) {
-                              if (snapshot.hasData) {
-                                return Text(snapshot.data!.toString());
-                              } else if (snapshot.hasError) {
-                                return Text('${snapshot.error}');
-                              } else {
-                                return SizedBox.shrink(); // Empty widget
-                              }
-                            },
-                          ),
-                        ElevatedButton(
-                            onPressed: _callApi, child: const Text('Press Me')),
-                      ]),
-                )
-              ],
-            ),
+                      ElevatedButton(
+                          onPressed: _callApiHello,
+                          child: const Text('Press Me')),
+                    ]),
+              ),
+
+              const SizedBox(height: 16.0),
+              // dockerコンテナへの送信
+              Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Text('You have pushed the button this many times:'),
+                    ElevatedButton(
+                        onPressed: _callApiMessages,
+                        child: const Text('Press Me')),
+                    const SizedBox(height: 8.0),
+                    SingleChildScrollView(
+                      child: FutureBuilder<List<Map<String, dynamic>>>(
+                        future: apiMessages,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return CircularProgressIndicator(); // Show a loading spinner while waiting
+                          } else if (snapshot.hasError) {
+                            return Text(
+                                'Error: ${snapshot.error}'); // Show error message if something went wrong
+                          } else {
+                            // Build a ListView to display the data
+                            return ListView.builder(
+                              shrinkWrap: true,
+                              physics: NeverScrollableScrollPhysics(),
+                              itemCount: snapshot.data!.length,
+                              itemBuilder: (context, index) {
+                                return ListTile(
+                                  title: Text(snapshot.data![index]['message']),
+                                  subtitle: Text(
+                                      'Number: ${snapshot.data![index]['number']}'),
+                                );
+                              },
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ]),
+              //)
+            ],
           ),
         ),
       ),

@@ -33,12 +33,16 @@ final class HelloController extends Controller
             'data' => [
                 [
                     'message' => 'message 1!',
-                    'yoour_number' => random_int(1,100), 
+                    'number' => random_int(1,100), 
                 ],
                 [
                     'message' => 'message 22!',
-                    'yoour_number' => random_int(1,100), 
-                ]
+                    'number' => random_int(1,100), 
+                ],
+                [
+                    'message' => 'message 333!',
+                    'number' => random_int(1,100), 
+                ],
             ],
         ]);
     }    
