@@ -71,8 +71,6 @@ Future<List<Map<String, dynamic>>> callApiMessages() async {
   if (response.statusCode == 200) {
     // If the server did return a 200 OK response,
     // then parse the JSON.
-    print(jsonDecode(response.body));
-    // return jsonDecode(response.body);
     Map<String, dynamic> jsonResponse = jsonDecode(response.body);
     var data = jsonResponse['data'];
     // print(data);
@@ -87,8 +85,6 @@ Future<List<Map<String, dynamic>>> callApiMessages() async {
       // });
       print('item message=${item['message']} number=${item['number']}');
     }
-    //return jsonDecode(response.body);
-    print('callApiMessages()');
     return dataList;
   } else {
     // If the server did not return a 200 OK response,
@@ -114,7 +110,6 @@ class _MyAppState extends State<MyApp> {
 
   // ローディング中かどうかを示すフラグ
   bool isApiHelloLoading = false;
-  // bool isApiMessagesLoading = false;
 
   @override
   void initState() {
@@ -122,13 +117,13 @@ class _MyAppState extends State<MyApp> {
     futureAlbum = fetchAlbum(_counter);
     apiHello = callApiHello();
     apiMessages = callApiMessages();
-    // apiMessages = null;
   }
 
   void _reFetch() {
     setState(() {
       _counter++;
-      futureAlbum = fetchAlbum(_counter);
+      futureAlbum =
+          Future.delayed(Duration(seconds: 0), () => fetchAlbum(_counter));
     });
   }
 
@@ -149,12 +144,10 @@ class _MyAppState extends State<MyApp> {
 
   // APIを呼び出す関数
   void _callApiMessages() {
-    print('_callApiMessages start');
     setState(() {
       apiMessages =
           Future.delayed(Duration(seconds: 0), () => callApiMessages());
     });
-    print('_callApiMessages end');
   }
 
   @override
@@ -179,21 +172,24 @@ class _MyAppState extends State<MyApp> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
                       Text('You have pushed the button this many times:'),
-                      FutureBuilder<Album>(
+                      ElevatedButton(
+                          onPressed: _reFetch, child: const Text('Press Me')),
+                      Center(
+                          child: FutureBuilder<Album>(
                         future: futureAlbum,
                         builder: (context, snapshot) {
-                          if (snapshot.hasData) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const CircularProgressIndicator();
+                          } else if (snapshot.hasData) {
                             return Text(snapshot.data!.title);
                           } else if (snapshot.hasError) {
                             return Text('${snapshot.error}');
                           }
-
-                          // By default, show a loading spinner.
                           return const CircularProgressIndicator();
+                          // return const CircularProgressIndicator();
                         },
-                      ),
-                      ElevatedButton(
-                          onPressed: _reFetch, child: const Text('Press Me')),
+                      )),
                     ]),
               ),
               const SizedBox(height: 16.0),
@@ -203,6 +199,9 @@ class _MyAppState extends State<MyApp> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
                       Text('You have pushed the button this many times:'),
+                      ElevatedButton(
+                          onPressed: _callApiHello,
+                          child: const Text('Press Me')),
                       if (isApiHelloLoading)
                         CircularProgressIndicator()
                       else
@@ -218,51 +217,44 @@ class _MyAppState extends State<MyApp> {
                             }
                           },
                         ),
-                      ElevatedButton(
-                          onPressed: _callApiHello,
-                          child: const Text('Press Me')),
                     ]),
               ),
 
               const SizedBox(height: 16.0),
               // dockerコンテナへの送信
-              Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Text('You have pushed the button this many times:'),
-                    ElevatedButton(
-                        onPressed: _callApiMessages,
-                        child: const Text('Press Me')),
-                    const SizedBox(height: 8.0),
-                    SingleChildScrollView(
-                      child: FutureBuilder<List<Map<String, dynamic>>>(
-                        future: apiMessages,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return CircularProgressIndicator(); // Show a loading spinner while waiting
-                          } else if (snapshot.hasError) {
-                            return Text(
-                                'Error: ${snapshot.error}'); // Show error message if something went wrong
-                          } else {
-                            // Build a ListView to display the data
-                            return ListView.builder(
-                              shrinkWrap: true,
-                              physics: NeverScrollableScrollPhysics(),
-                              itemCount: snapshot.data!.length,
-                              itemBuilder: (context, index) {
-                                return ListTile(
-                                  title: Text(snapshot.data![index]['message']),
-                                  subtitle: Text(
-                                      'Number: ${snapshot.data![index]['number']}'),
-                                );
-                              },
+              Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Text('You have pushed the button this many times:'),
+                ElevatedButton(
+                    onPressed: _callApiMessages, child: const Text('Press Me')),
+                const SizedBox(height: 8.0),
+                SingleChildScrollView(
+                  child: FutureBuilder<List<Map<String, dynamic>>>(
+                    future: apiMessages,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return CircularProgressIndicator(); // Show a loading spinner while waiting
+                      } else if (snapshot.hasError) {
+                        return Text(
+                            'Error: ${snapshot.error}'); // Show error message if something went wrong
+                      } else {
+                        // Build a ListView to display the data
+                        return ListView.builder(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemCount: snapshot.data!.length,
+                          itemBuilder: (context, index) {
+                            return ListTile(
+                              title: Text(snapshot.data![index]['message']),
+                              subtitle: Text(
+                                  'Number: ${snapshot.data![index]['number']}'),
                             );
-                          }
-                        },
-                      ),
-                    ),
-                  ]),
+                          },
+                        );
+                      }
+                    },
+                  ),
+                ),
+              ]),
               //)
             ],
           ),
