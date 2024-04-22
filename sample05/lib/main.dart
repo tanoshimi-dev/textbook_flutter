@@ -53,7 +53,7 @@ Future<Map<String, dynamic>?> callApiHello() async {
     // エミュレーターから（ローカルPC内の）dockerコンテナへのアドレスは10.0.2.2となる
     final response =
         await http.get(Uri.parse('http://10.0.2.2:15011/api/hello')).timeout(
-      const Duration(seconds: 5),
+      const Duration(seconds: 15),
       onTimeout: () {
         throw TimeoutException('The connection has timed out!');
       },
@@ -85,7 +85,7 @@ Future<List<Map<String, dynamic>>> callApiMessages() async {
     // エミュレーターから（ローカルPC内の）dockerコンテナへのアドレスは10.0.2.2となる
     final response =
         await http.get(Uri.parse('http://10.0.2.2:15011/api/messages')).timeout(
-      const Duration(seconds: 5),
+      const Duration(seconds: 15),
       onTimeout: () {
         throw TimeoutException('The connection has timed out!');
       },
