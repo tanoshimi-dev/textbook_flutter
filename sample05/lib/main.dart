@@ -47,49 +47,81 @@ class Album {
   }
 }
 
-Future<Map<String, dynamic>> callApiHello() async {
-  final response =
-      // エミュレーターから（ローカルPC内の）dockerコンテナへのアドレスは10.0.2.2となる
-      await http.get(Uri.parse('http://10.0.2.2:15011/api/hello'));
+Future<Map<String, dynamic>?> callApiHello() async {
+  // Add a return statement at the end
+  try {
+    // エミュレーターから（ローカルPC内の）dockerコンテナへのアドレスは10.0.2.2となる
+    final response =
+        await http.get(Uri.parse('http://10.0.2.2:15011/api/hello')).timeout(
+      const Duration(seconds: 5),
+      onTimeout: () {
+        throw TimeoutException('The connection has timed out!');
+      },
+    );
 
-  if (response.statusCode == 200) {
-    // If the server did return a 200 OK response,
-    // then parse the JSON.
-    return jsonDecode(response.body);
-  } else {
-    // If the server did not return a 200 OK response,
-    // then throw an exception.
-    throw Exception('Failed to call api');
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      return jsonDecode(response.body);
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to call api');
+    }
+  } on TimeoutException catch (e) {
+    // Handle the timeout exception
+    print(e.message);
+    return null;
+  } catch (e) {
+    // Handle any other exceptions
+    print(e);
+    return null;
   }
 }
 
 Future<List<Map<String, dynamic>>> callApiMessages() async {
-  final response =
-      // エミュレーターから（ローカルPC内の）dockerコンテナへのアドレスは10.0.2.2となる
-      await http.get(Uri.parse('http://10.0.2.2:15011/api/messages'));
+  // Add a return statement at the end
+  try {
+    // エミュレーターから（ローカルPC内の）dockerコンテナへのアドレスは10.0.2.2となる
+    final response =
+        await http.get(Uri.parse('http://10.0.2.2:15011/api/messages')).timeout(
+      const Duration(seconds: 5),
+      onTimeout: () {
+        throw TimeoutException('The connection has timed out!');
+      },
+    );
 
-  if (response.statusCode == 200) {
-    // If the server did return a 200 OK response,
-    // then parse the JSON.
-    Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-    var data = jsonResponse['data'];
-    // print(data);
-    // print(data.length);
-    List<Map<String, dynamic>> dataList = List<Map<String, dynamic>>.from(data);
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+      var data = jsonResponse['data'];
+      // print(data);
+      // print(data.length);
+      List<Map<String, dynamic>> dataList =
+          List<Map<String, dynamic>>.from(data);
 
-    // Now you can iterate over dataList
-    for (var item in dataList) {
-      //print(item);
-      // item.forEach((key, value) {
-      //   print('Key: $key, Value: $value');
-      // });
-      print('item message=${item['message']} number=${item['number']}');
+      // Now you can iterate over dataList
+      for (var item in dataList) {
+        //print(item);
+        // item.forEach((key, value) {
+        //   print('Key: $key, Value: $value');
+        // });
+        print('item message=${item['message']} number=${item['number']}');
+      }
+      return dataList;
+    } else {
+      // If the server returns an unexpected response, throw an error.
+      throw Exception('Unexpected response from the server!');
     }
-    return dataList;
-  } else {
-    // If the server did not return a 200 OK response,
-    // then throw an exception.
-    throw Exception('Failed to call api');
+  } on TimeoutException catch (e) {
+    // Handle the timeout exception
+    print(e.message);
+    return [];
+  } catch (e) {
+    // Handle any other exceptions
+    print(e);
+    return [];
   }
 }
 
@@ -105,7 +137,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   int _counter = 1;
   late Future<Album> futureAlbum;
-  late Future<Map<String, dynamic>>? apiHello;
+  late Future<Map<String, dynamic>?> apiHello;
   late Future<List<Map<String, dynamic>>>? apiMessages;
 
   // ローディング中かどうかを示すフラグ
@@ -115,15 +147,14 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     futureAlbum = fetchAlbum(_counter);
-    apiHello = callApiHello();
+    apiHello = callApiHello() as Future<Map<String, dynamic>?>;
     apiMessages = callApiMessages();
   }
 
   void _reFetch() {
     setState(() {
       _counter++;
-      futureAlbum =
-          Future.delayed(Duration(seconds: 0), () => fetchAlbum(_counter));
+      futureAlbum = fetchAlbum(_counter);
     });
   }
 
@@ -133,7 +164,7 @@ class _MyAppState extends State<MyApp> {
       isApiHelloLoading = true;
     });
 
-    apiHello = Future.delayed(Duration(seconds: 0), () => callApiHello());
+    apiHello = callApiHello() as Future<Map<String, dynamic>?>;
 
     apiHello!.then((_) {
       setState(() {
@@ -145,8 +176,7 @@ class _MyAppState extends State<MyApp> {
   // APIを呼び出す関数
   void _callApiMessages() {
     setState(() {
-      apiMessages =
-          Future.delayed(Duration(seconds: 0), () => callApiMessages());
+      apiMessages = callApiMessages();
     });
   }
 
@@ -205,7 +235,7 @@ class _MyAppState extends State<MyApp> {
                       if (isApiHelloLoading)
                         CircularProgressIndicator()
                       else
-                        FutureBuilder<Map<String, dynamic>>(
+                        FutureBuilder<Map<String, dynamic>?>(
                           future: apiHello,
                           builder: (context, snapshot) {
                             if (snapshot.hasData) {
