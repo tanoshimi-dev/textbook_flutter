@@ -32,8 +32,11 @@ services:
       MYSQL_DATABASE: flutter_backend
       MYSQL_USER: fl_backend_user
       MYSQL_PASSWORD: sl_P@ss
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
     volumes:
       - ./db/data:/var/lib/mysql
+      - ./db/initial_table:/docker-entrypoint-initdb.d
+
 
   backend-myadmin:
     container_name: 'backend.myadmin'

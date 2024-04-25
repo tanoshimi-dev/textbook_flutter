@@ -18,6 +18,10 @@ use App\Http\Controllers\Api\HelloController;
 Route::get('/hello', HelloController::class);
 Route::get('/messages', [HelloController::class, 'getMessages']);
 
+Route::get('/menus', [HelloController::class, 'getMenus']);
+
+
+
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });

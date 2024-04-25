@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 final class HelloController extends Controller
@@ -45,6 +46,25 @@ final class HelloController extends Controller
                 ],
             ],
         ]);
-    }    
+    }
+
+
+ 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getMenus(Request $request): JsonResponse
+    {
+        // DBからデータを取得する
+        $rows = DB::table('menus')
+            ->orderBy('id', 'asc')->get();
+
+        //dd($rows);
+        return new JsonResponse([
+            'data' => $rows,
+        ]);
+    } 
+
 }
 
