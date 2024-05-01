@@ -4,9 +4,7 @@ import 'my_data.dart';
 import 'my_widget.dart';
 
 // NotifierProviderをグローバルに定義
-final countProvider = NotifierProvider<MyData, int>(() {
-  return MyData();
-});
+final countProvider = StateNotifierProvider<MyData, int>((ref) => MyData());
 
 void main() {
   runApp(const ProviderScope(child: const MyApp()));
